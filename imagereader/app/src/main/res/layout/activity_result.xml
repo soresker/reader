@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -9,113 +11,103 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Belge tipi için yeni TextView -->
         <TextView
             android:id="@+id/tvBelgeTipi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:textAlignment="center"
-            android:textColor="@color/purple_700"/>
+            android:textColor="@color/primary"/>
 
-        <!-- Çekilen fotoğrafı göstermek için ImageView -->
-        <ImageView
-            android:id="@+id/imageView"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerInside"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:background="#EEEEEE"
-            android:contentDescription="Çekilen Ehliyet Fotoğrafı"/>
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
 
-        <!-- Mevcut TextView'ler -->
-        <TextView
-            android:id="@+id/tvSoyadi"
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerInside"
+                android:background="@color/primary_light"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:textSize="16sp" />
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
 
-        <TextView
-            android:id="@+id/tvAdi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvDogumTarihi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <!-- Mevcut TextView'ler için stil güncellemesi -->
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvTCKN"/>
 
-        <TextView
-            android:id="@+id/tvDogumYeri"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvSoyadi"/>
 
-        <TextView
-            android:id="@+id/tvVerilisTarihi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvAdi"/>
 
-        <TextView
-            android:id="@+id/tvGecerlilikTarihi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvDogumTarihi"/>
 
-        <TextView
-            android:id="@+id/tvVerildigiIlce"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvDogumYeri"/>
 
-        <TextView
-            android:id="@+id/tvTCKN"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvVerilisTarihi"/>
 
-        <TextView
-            android:id="@+id/tvEhliyetNo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvGecerlilikTarihi"/>
 
-        <TextView
-            android:id="@+id/tvSeriNo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvVerildigiIlce"/>
 
-        <TextView
-            android:id="@+id/tvUyruk"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="16sp" />
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvEhliyetNo"/>
 
-        <Button
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvSeriNo"/>
+
+                <TextView
+                    style="@style/ResultTextView"
+                    android:id="@+id/tvUyruk"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNewPhoto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="@string/new_photo"
-            android:padding="12dp"/>
+            android:padding="12dp"
+            app:cornerRadius="8dp"
+            android:backgroundTint="@color/primary"/>
 
     </LinearLayout>
 </ScrollView>

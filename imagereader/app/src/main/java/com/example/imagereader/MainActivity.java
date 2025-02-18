@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         context = this;
 
-        FloatingActionButton cameraButton = findViewById(R.id.cameraButton);
+        ExtendedFloatingActionButton cameraButton = findViewById(R.id.cameraButton);
         cameraButton.setOnClickListener(v -> checkPermissions());
     }
 
