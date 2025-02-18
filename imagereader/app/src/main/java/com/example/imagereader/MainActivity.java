@@ -65,35 +65,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void openCamera() {
         try {
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            
-            // Yüksek çözünürlük için
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, createImageUri());
-            intent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, 1024*1024*20); // 20MB
-            intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1); // En yüksek kalite
-            
+            Intent intent = new Intent(this, CameraPreviewActivity.class);
             startActivityForResult(intent, CAMERA_REQUEST_CODE);
         } catch (Exception e) {
             Log.e("CAMERA_ERROR", "Kamera açılırken hata: ", e);
             Toast.makeText(this, "Kamera açılamadı: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
-    }
-
-    private Uri createImageUri() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",        /* suffix */
-                storageDir     /* directory */
-        );
-
-        currentPhotoPath = image.getAbsolutePath();
-        return FileProvider.getUriForFile(this,
-                getApplicationContext().getPackageName() + ".provider",
-                image);
     }
 
     @Override
@@ -113,24 +91,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         try {
-            if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
-                if (currentPhotoPath == null) {
-                    Log.e("CAMERA_ERROR", "Fotoğraf yolu bulunamadı");
-                    Toast.makeText(this, "Fotoğraf yolu bulunamadı", Toast.LENGTH_LONG).show();
-                    return;
+            if (requestCode == CAMERA_REQUEST_CODE) {
+                if (resultCode == RESULT_OK && data != null && data.hasExtra("photo_path")) {
+                    String photoPath = data.getStringExtra("photo_path");
+                    // Fotoğraf dosyasının yolunu ResultActivity'ye gönder
+                    Intent intent = new Intent(this, ResultActivity.class);
+                    intent.putExtra("photo_path", photoPath);
+                    startActivity(intent);
+                } else if (resultCode == RESULT_CANCELED) {
+                    // Kullanıcı geri döndüğünde yeni kamera önizlemesini aç
+                    openCamera();
                 }
-
-                File photoFile = new File(currentPhotoPath);
-                if (!photoFile.exists()) {
-                    Log.e("CAMERA_ERROR", "Fotoğraf dosyası bulunamadı: " + currentPhotoPath);
-                    Toast.makeText(this, "Fotoğraf dosyası bulunamadı", Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                // Fotoğraf dosyasının yolunu ResultActivity'ye gönder
-                Intent intent = new Intent(this, ResultActivity.class);
-                intent.putExtra("photo_path", currentPhotoPath);
-                startActivity(intent);
             }
         } catch (Exception e) {
             Log.e("CAMERA_ERROR", "Fotoğraf işlenirken hata: " + e.getMessage(), e);

@@ -28,12 +28,46 @@
             app:cardCornerRadius="8dp"
             app:cardElevation="4dp">
 
-            <ImageView
-                android:id="@+id/imageView"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="centerInside"
-                android:background="@color/primary_light"/>
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/imageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerInside"
+                    android:background="@color/primary_light"
+                    android:foreground="?attr/selectableItemBackground"/>
+
+                <!-- Zoom göstergesi -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|bottom"
+                    android:layout_margin="8dp"
+                    android:padding="8dp"
+                    android:background="@drawable/zoom_indicator_background"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_zoom"
+                        android:tint="@color/white"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Büyütmek için dokun"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"/>
+
+                </LinearLayout>
+
+            </FrameLayout>
 
         </androidx.cardview.widget.CardView>
 
@@ -99,15 +133,18 @@
 
         </androidx.cardview.widget.CardView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNewPhoto"
+        <Button
+            android:id="@+id/newPhotoButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/new_photo"
+            android:text="Yeni Fotoğraf Çek"
+            android:layout_margin="16dp"
             android:padding="12dp"
-            app:cornerRadius="8dp"
-            android:backgroundTint="@color/primary"/>
+            android:textSize="16sp"
+            android:backgroundTint="@color/primary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
     </LinearLayout>
 </ScrollView>

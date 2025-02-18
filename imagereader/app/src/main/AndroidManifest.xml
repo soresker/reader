@@ -30,6 +30,14 @@
             android:name=".ResultActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".CameraPreviewActivity"
+            android:exported="false"/>
+
+        <activity
+            android:name=".ImageViewerActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 
+import androidx.annotation.Nullable;
+
 public class ResultActivity extends AppCompatActivity {
     private TextView tvSoyadi, tvAdi, tvDogumTarihi, tvDogumYeri, tvVerilisTarihi,
             tvGecerlilikTarihi, tvVerildigiIlce, tvTCKN, tvEhliyetNo,
@@ -106,52 +108,29 @@ public class ResultActivity extends AppCompatActivity {
         tvUyruk.setText("Uyruk: Taranıyor...");
         tvBelgeTipi.setText("Belge Tipi: Taranıyor...");
 
-        // Yeni fotoğraf çekme butonu
-        findViewById(R.id.btnNewPhoto).setOnClickListener(v -> {
-            // Direkt kamera aktivitesini başlat
-            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            File photoFile = null;
-            try {
-                photoFile = ((MainActivity)MainActivity.context).createImageFile();
-            } catch (IOException ex) {
-                Log.e("CAMERA_ERROR", "Dosya oluşturma hatası: " + ex.getMessage());
-                Toast.makeText(this, "Dosya oluşturulamadı", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        // Yeni Fotoğraf Çek butonuna tıklandığında
+        findViewById(R.id.newPhotoButton).setOnClickListener(v -> {
+            // Eski kamera yerine yeni kamera önizlememizi başlat
+            Intent intent = new Intent(this, CameraPreviewActivity.class);
+            startActivityForResult(intent, CAMERA_REQUEST_CODE);
+        });
 
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        getApplicationContext().getPackageName() + ".provider",
-                        photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
-            }
+        imageView.setOnClickListener(v -> {
+            // Tam ekran görüntüleme aktivitesini başlat
+            Intent intent = new Intent(this, ImageViewerActivity.class);
+            intent.putExtra("image_path", getIntent().getStringExtra("photo_path"));
+            startActivity(intent);
         });
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
-            // Yeni fotoğrafı işle
-            String photoPath = ((MainActivity)MainActivity.context).getCurrentPhotoPath();
-            if (photoPath != null) {
-                try {
-                    File photoFile = new File(photoPath);
-                    if (photoFile.exists()) {
-                        Bitmap photo = BitmapFactory.decodeFile(photoPath);
-                        if (photo != null) {
-                            imageView.setImageBitmap(photo);
-                            clearAllFields();
-                            processImage(photo);
-                        } else {
-                            Toast.makeText(this, "Fotoğraf yüklenemedi", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e("PHOTO_ERROR", "Fotoğraf işlenirken hata: " + e.getMessage());
-                    Toast.makeText(this, "Fotoğraf işlenirken hata oluştu", Toast.LENGTH_LONG).show();
-                }
+        if (requestCode == CAMERA_REQUEST_CODE) {
+            if (resultCode == RESULT_OK && data != null && data.hasExtra("photo_path")) {
+                String photoPath = data.getStringExtra("photo_path");
+                // Yeni fotoğrafı işle
+                processImage(BitmapFactory.decodeFile(photoPath));
             }
         }
     }
