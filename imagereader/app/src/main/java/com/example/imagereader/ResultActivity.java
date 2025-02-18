@@ -55,8 +55,8 @@ public class ResultActivity extends AppCompatActivity {
                 if (photoFile.exists()) {
                     Bitmap photo = BitmapFactory.decodeFile(photoPath);
                     if (photo != null) {
-                        // Çekilen fotoğrafı göster
                         imageView.setImageBitmap(photo);
+                        clearAllFields();
                         processImage(photo);
                     } else {
                         Toast.makeText(this, "Fotoğraf yüklenemedi", Toast.LENGTH_LONG).show();
@@ -142,6 +142,7 @@ public class ResultActivity extends AppCompatActivity {
                         Bitmap photo = BitmapFactory.decodeFile(photoPath);
                         if (photo != null) {
                             imageView.setImageBitmap(photo);
+                            clearAllFields();
                             processImage(photo);
                         } else {
                             Toast.makeText(this, "Fotoğraf yüklenemedi", Toast.LENGTH_LONG).show();
@@ -485,5 +486,21 @@ public class ResultActivity extends AppCompatActivity {
         tvEhliyetNo.setText("Ehliyet No: Okunamadı");
         tvSeriNo.setText("Seri No: Okunamadı");
         tvUyruk.setText("Uyruk: Okunamadı");
+    }
+
+    private void clearAllFields() {
+        // Tüm alanları temizle
+        tvSoyadi.setText("Soyadı: Taranıyor...");
+        tvAdi.setText("Adı: Taranıyor...");
+        tvDogumTarihi.setText("Doğum Tarihi: Taranıyor...");
+        tvDogumYeri.setText("Doğum Yeri: Taranıyor...");
+        tvVerilisTarihi.setText("Veriliş Tarihi: Taranıyor...");
+        tvGecerlilikTarihi.setText("Geçerlilik Tarihi: Taranıyor...");
+        tvVerildigiIlce.setText("Verildiği İlçe: Taranıyor...");
+        tvTCKN.setText("TCKN: Taranıyor...");
+        tvEhliyetNo.setText("Ehliyet No: Taranıyor...");
+        tvSeriNo.setText("Seri No: Taranıyor...");
+        tvUyruk.setText("Uyruk: Taranıyor...");
+        tvBelgeTipi.setText("Belge Tipi: Taranıyor...");
     }
 } 
