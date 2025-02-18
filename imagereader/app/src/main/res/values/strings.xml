@@ -43,4 +43,9 @@
         libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
         vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
     </string>
+    <string name="new_photo">Yeni Fotoğraf Çek</string>
+    <string name="exit">Çıkış</string>
+    <string name="exit_confirmation">Uygulamadan çıkmak istiyor musunuz?</string>
+    <string name="yes">Evet</string>
+    <string name="no">Hayır</string>
 </resources>

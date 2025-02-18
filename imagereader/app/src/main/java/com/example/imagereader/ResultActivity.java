@@ -1,5 +1,6 @@
 package com.example.imagereader;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -91,6 +92,15 @@ public class ResultActivity extends AppCompatActivity {
         tvVerildigiIlce.setText("Verildiği İlçe: Taranıyor...");
         tvTCKN.setText("TCKN: Taranıyor...");
         tvEhliyetNo.setText("Ehliyet No: Taranıyor...");
+
+        // Yeni fotoğraf çekme butonu
+        findViewById(R.id.btnNewPhoto).setOnClickListener(v -> {
+            // Ana ekrana dön ve tüm aktiviteleri temizle
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void processImage(Bitmap bitmap) {

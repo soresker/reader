@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.app.AlertDialog;
+
 public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_CODE = 100;
     private static final int CAMERA_REQUEST_CODE = 101;
@@ -135,4 +137,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String currentPhotoPath;
+
+    @Override
+    public void onBackPressed() {
+        // Uygulamadan çıkmak istediğinden emin misin diye sor
+        new AlertDialog.Builder(this)
+            .setTitle("Çıkış")
+            .setMessage("Uygulamadan çıkmak istiyor musunuz?")
+            .setPositiveButton("Evet", (dialog, which) -> {
+                finish();
+            })
+            .setNegativeButton("Hayır", null)
+            .show();
+    }
 }
