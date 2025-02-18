@@ -1,6 +1,7 @@
 package com.example.imagereader;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -28,6 +29,8 @@ import java.util.Date;
 import android.app.AlertDialog;
 
 public class MainActivity extends AppCompatActivity {
+    public static Context context;
+
     private static final int CAMERA_PERMISSION_CODE = 100;
     private static final int CAMERA_REQUEST_CODE = 101;
     private static final int STORAGE_PERMISSION_CODE = 102;
@@ -36,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = this;
 
         FloatingActionButton cameraButton = findViewById(R.id.cameraButton);
         cameraButton.setOnClickListener(v -> checkPermissions());
@@ -149,5 +153,27 @@ public class MainActivity extends AppCompatActivity {
             })
             .setNegativeButton("Hayır", null)
             .show();
+    }
+
+    public File createImageFile() throws IOException {
+        // Benzersiz bir dosya adı oluştur
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        
+        // Geçici dosya oluştur
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",        /* suffix */
+                storageDir     /* directory */
+        );
+
+        // Dosya yolunu kaydet
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    public String getCurrentPhotoPath() {
+        return currentPhotoPath;
     }
 }

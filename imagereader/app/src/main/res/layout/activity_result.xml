@@ -9,6 +9,17 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Belge tipi için yeni TextView -->
+        <TextView
+            android:id="@+id/tvBelgeTipi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:textColor="@color/purple_700"/>
+
         <!-- Çekilen fotoğrafı göstermek için ImageView -->
         <ImageView
             android:id="@+id/imageView"
@@ -79,6 +90,20 @@
 
         <TextView
             android:id="@+id/tvEhliyetNo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvSeriNo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvUyruk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

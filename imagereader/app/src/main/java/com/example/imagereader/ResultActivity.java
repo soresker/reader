@@ -8,11 +8,15 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import androidx.core.content.FileProvider;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ImageView;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,6 +27,7 @@ import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
@@ -31,8 +36,10 @@ import java.util.Arrays;
 
 public class ResultActivity extends AppCompatActivity {
     private TextView tvSoyadi, tvAdi, tvDogumTarihi, tvDogumYeri, tvVerilisTarihi,
-            tvGecerlilikTarihi, tvVerildigiIlce, tvTCKN, tvEhliyetNo;
+            tvGecerlilikTarihi, tvVerildigiIlce, tvTCKN, tvEhliyetNo,
+            tvSeriNo, tvUyruk, tvBelgeTipi;
     private ImageView imageView; // Çekilen fotoğrafı göstermek için
+    private static final int CAMERA_REQUEST_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +88,9 @@ public class ResultActivity extends AppCompatActivity {
         tvVerildigiIlce = findViewById(R.id.tvVerildigiIlce);
         tvTCKN = findViewById(R.id.tvTCKN);
         tvEhliyetNo = findViewById(R.id.tvEhliyetNo);
+        tvSeriNo = findViewById(R.id.tvSeriNo);
+        tvUyruk = findViewById(R.id.tvUyruk);
+        tvBelgeTipi = findViewById(R.id.tvBelgeTipi);
 
         // Başlangıç değerlerini ayarla
         tvSoyadi.setText("Soyadı: Taranıyor...");
@@ -92,15 +102,57 @@ public class ResultActivity extends AppCompatActivity {
         tvVerildigiIlce.setText("Verildiği İlçe: Taranıyor...");
         tvTCKN.setText("TCKN: Taranıyor...");
         tvEhliyetNo.setText("Ehliyet No: Taranıyor...");
+        tvSeriNo.setText("Seri No: Taranıyor...");
+        tvUyruk.setText("Uyruk: Taranıyor...");
+        tvBelgeTipi.setText("Belge Tipi: Taranıyor...");
 
         // Yeni fotoğraf çekme butonu
         findViewById(R.id.btnNewPhoto).setOnClickListener(v -> {
-            // Ana ekrana dön ve tüm aktiviteleri temizle
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
+            // Direkt kamera aktivitesini başlat
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            File photoFile = null;
+            try {
+                photoFile = ((MainActivity)MainActivity.context).createImageFile();
+            } catch (IOException ex) {
+                Log.e("CAMERA_ERROR", "Dosya oluşturma hatası: " + ex.getMessage());
+                Toast.makeText(this, "Dosya oluşturulamadı", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        getApplicationContext().getPackageName() + ".provider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
+            }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
+            // Yeni fotoğrafı işle
+            String photoPath = ((MainActivity)MainActivity.context).getCurrentPhotoPath();
+            if (photoPath != null) {
+                try {
+                    File photoFile = new File(photoPath);
+                    if (photoFile.exists()) {
+                        Bitmap photo = BitmapFactory.decodeFile(photoPath);
+                        if (photo != null) {
+                            imageView.setImageBitmap(photo);
+                            processImage(photo);
+                        } else {
+                            Toast.makeText(this, "Fotoğraf yüklenemedi", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e("PHOTO_ERROR", "Fotoğraf işlenirken hata: " + e.getMessage());
+                    Toast.makeText(this, "Fotoğraf işlenirken hata oluştu", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
     }
 
     private void processImage(Bitmap bitmap) {
@@ -233,17 +285,37 @@ public class ResultActivity extends AppCompatActivity {
 
         Log.d("OCR_CLEANED", "Temizlenmiş metin:\n" + text);
 
+        // Belge tipini belirle (Ehliyet mi Kimlik mi?)
+        boolean isEhliyet = text.contains("SÜRÜCÜ") || text.contains("DRIVING") || text.contains("B1") || text.contains("LICENCE");
+        
         Map<String, String> patterns = new HashMap<>();
-        patterns.put("Soyadı", "1\\.\\s*([A-ZĞÜŞİÖÇ]+)");  // Herhangi bir büyük harf dizisi
-        patterns.put("Adı", "2\\.\\s*([A-ZĞÜŞİÖÇa-zğüşıöç\\s]+)");  // Ad ve soyadı
-        patterns.put("Doğum Tarihi", "3\\.\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");  // GG.AA.YYYY formatında tarih
-        patterns.put("Doğum Yeri", "3\\..*?\\d{4}\\s+([A-ZĞÜŞİÖÇA-Za-zğüşıöç]+)");  // Tarihten sonraki yer adı
-        patterns.put("Veriliş Tarihi", "4[Aa]\\.\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");  // GG.AA.YYYY formatında tarih
-        patterns.put("Geçerlilik Tarihi", "4[Bb]\\.\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");  // GG.AA.YYYY formatında tarih
-        patterns.put("Verildiği İlçe", "4[Cc]\\.\\s*\\d{1,2}\\s*([A-ZĞÜŞİÖÇA-Za-zğüşıöç]+)");  // İl kodu ve ilçe adı
-        patterns.put("TCKN", "4[Dd]\\.\\s*(\\d{11})");  // 11 haneli TC kimlik no
-        patterns.put("Ehliyet No", "5\\.?\\s*(\\d{4,6})");  // 4-6 haneli sayı
+        
+        if (isEhliyet) {
+            // Ehliyet pattern'leri - orijinal hali
+            patterns.put("Soyadı", "1\\.\\s*([A-ZĞÜŞİÖÇ]+)");  // Herhangi bir büyük harf dizisi
+            patterns.put("Adı", "2\\.\\s*([A-ZĞÜŞİÖÇa-zğüşıöç\\s]+)");  // Ad ve soyadı
+            patterns.put("Doğum Tarihi", "3\\.\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");  // GG.AA.YYYY formatında tarih
+            patterns.put("Doğum Yeri", "3\\..*?\\d{4}\\s+([A-ZĞÜŞİÖÇA-Za-zğüşıöç]+)");  // Tarihten sonraki yer adı
+            patterns.put("Veriliş Tarihi", "4[Aa]\\.\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");  // GG.AA.YYYY formatında tarih
+            patterns.put("Geçerlilik Tarihi", "4[Bb]\\.\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");  // GG.AA.YYYY formatında tarih
+            patterns.put("Verildiği İlçe", "4[Cc]\\.\\s*\\d{1,2}\\s*([A-ZĞÜŞİÖÇA-Za-zğüşıöç]+)");  // İl kodu ve ilçe adı
+            patterns.put("TCKN", "4[Dd]\\.\\s*(\\d{11})");  // 11 haneli TC kimlik no
+            patterns.put("Ehliyet No", "5\\.?\\s*(\\d{4,6})");  // 4-6 haneli sayı
+        } else {
+            // Kimlik kartı pattern'leri - düzeltilmiş hali
+            patterns.put("TCKN", "(?:TÜRKİYE\\s+CUMHUR.*?|REPUBLIC.*?)\\s*(\\d{11})");
+            patterns.put("Soyadı", "(?:SOYADI|SURNAME)\\s+([A-ZĞÜŞİÖÇ]+)(?=\\s+ADI|\\s+GIVEN)");  // Sonrasında ADI veya GIVEN gelecek
+            patterns.put("Adı", "(?:ADI|GIVEN).*?NAMES\\s+([A-ZĞÜŞİÖÇ\\s]+?)(?=\\s+DOĞUM|\\s+BIRTH)");  // NAMES sonrası, DOĞUM öncesi
+            patterns.put("Doğum Tarihi", "(?:DOĞUM|BIRTH).*?(\\d{2}\\.\\d{2}\\.\\d{4})");
+            patterns.put("Seri No", "(?:SERİ|DOCUMENT).*?\\s*([A-Z]\\d+)");
+            patterns.put("Uyruk", "(?:UYRUĞU|NATIONALITY).*?\\s*(T\\.?C\\.?/?TUR)");
+            patterns.put("Son Geçerlilik", "(?:SON\\s*GEÇERLİLİK|VALID).*?\\s*(\\d{2}\\.\\d{2}\\.\\d{4})");
+        }
 
+        // UI'ı belge tipine göre güncelle
+        updateUIForDocumentType(isEhliyet);
+
+        // Pattern'leri uygula
         for (Map.Entry<String, String> entry : patterns.entrySet()) {
             try {
                 Pattern pattern = Pattern.compile(entry.getValue());
@@ -251,46 +323,12 @@ public class ResultActivity extends AppCompatActivity {
 
                 if (matcher.find()) {
                     String value = matcher.group(1).trim();
-                    
-                    // Ehliyet No için özel kontrol
-                    if (entry.getKey().equals("Ehliyet No")) {
-                        // 3 rakamdan uzun ve TCKN olmayan sayıları al
-                        if (value.length() > 3 && value.length() != 11) {
-                            updateTextView(entry.getKey(), value);
-                            continue;
-                        }
-                    }
-                    
                     updateTextView(entry.getKey(), value);
                     Log.d("OCR_MATCH", entry.getKey() + ": " + value);
                 } else {
                     Log.w("OCR_NOMATCH", entry.getKey() + " için eşleşme bulunamadı");
-                    
-                    // Ehliyet No için alternatif pattern'ler
-                    if (entry.getKey().equals("Ehliyet No")) {
-                        // İlk alternatif: 5. ile başlayan herhangi bir sayı
-                        pattern = Pattern.compile("5\\.\\s*(\\d+)");
-                        matcher = pattern.matcher(text);
-                        if (matcher.find()) {
-                            String number = matcher.group(1);
-                            if (number.length() > 3 && number.length() != 11) {
-                                updateTextView(entry.getKey(), number);
-                                continue;
-                            }
-                        }
-
-                        // İkinci alternatif: 6 haneli sayı
-                        pattern = Pattern.compile("(\\d{6})");
-                        matcher = pattern.matcher(text);
-                        while (matcher.find()) {
-                            String number = matcher.group(1);
-                            // TCKN olmadığından emin ol ve 134229'u bul
-                            if (number.length() == 6 && !number.equals(text.substring(matcher.start()-2, matcher.start()+6).contains("4d"))) {
-                                updateTextView(entry.getKey(), number);
-                                break;
-                            }
-                        }
-                    }
+                    // Alternatif pattern'leri uygula
+                    applyAlternativePatterns(entry.getKey(), text);
                 }
             } catch (Exception e) {
                 Log.e("OCR_REGEX", entry.getKey() + " için hata: " + e.getMessage());
@@ -298,53 +336,144 @@ public class ResultActivity extends AppCompatActivity {
         }
     }
 
+    private void updateUIForDocumentType(boolean isEhliyet) {
+        // Belge tipini göster
+        tvBelgeTipi.setText(isEhliyet ? 
+            "📄Sürücü Belgesi" : 
+            "🪪 Kimlik Kartı");
+        tvBelgeTipi.setTextColor(getResources().getColor(
+            isEhliyet ? R.color.teal_700 : R.color.purple_700));
+
+        // Ehliyet-spesifik alanlar
+        tvEhliyetNo.setVisibility(isEhliyet ? View.VISIBLE : View.GONE);
+        tvVerildigiIlce.setVisibility(isEhliyet ? View.VISIBLE : View.GONE);
+        tvVerilisTarihi.setVisibility(isEhliyet ? View.VISIBLE : View.GONE);
+        tvDogumYeri.setVisibility(isEhliyet ? View.VISIBLE : View.GONE);
+        tvGecerlilikTarihi.setVisibility(isEhliyet ? View.VISIBLE : View.GONE);
+
+        // Kimlik-spesifik alanlar
+        tvSeriNo.setVisibility(isEhliyet ? View.GONE : View.VISIBLE);
+        tvUyruk.setVisibility(isEhliyet ? View.GONE : View.VISIBLE);
+    }
+
+    private void applyAlternativePatterns(String field, String text) {
+        Pattern pattern;
+        Matcher matcher;
+
+        switch (field) {
+            case "Ehliyet No":
+                // Sadece 6 haneli sayı ara
+                pattern = Pattern.compile("\\b(\\d{6})\\b");
+                matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    String number = matcher.group(1);
+                    if (number.length() == 6 && !text.substring(Math.max(0, matcher.start()-2), matcher.end()).contains("4d")) {
+                        updateTextView(field, number);
+                    }
+                }
+                break;
+            case "TCKN":
+                // Sadece 11 haneli sayı ara
+                pattern = Pattern.compile("\\b(\\d{11})\\b");
+                matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    updateTextView(field, matcher.group(1));
+                }
+                break;
+            case "Seri No":
+                pattern = Pattern.compile("\\b([A-Z]\\d{8})\\b");
+                matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    updateTextView(field, matcher.group(1));
+                }
+                break;
+            case "Uyruk":
+                pattern = Pattern.compile("\\b(T\\.?C\\.?/?TUR)\\b");
+                matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    updateTextView(field, matcher.group(1));
+                }
+                break;
+            case "Soyadı":
+                pattern = Pattern.compile("SOYADI.*?SURNAME\\s+([A-ZĞÜŞİÖÇ]+)(?!.*NAMES)");
+                matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    updateTextView(field, matcher.group(1));
+                }
+                break;
+            case "Adı":
+                pattern = Pattern.compile("NAMES\\s+([A-ZĞÜŞİÖÇ\\s]+?)(?=\\s+DOĞUM|\\s+BIRTH|\\s+SERİ|$)");
+                matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    String name = matcher.group(1).trim();
+                    if (name.length() > 2 && !name.contains("SURNAME")) {
+                        updateTextView(field, name);
+                    }
+                }
+                break;
+            case "Doğum Tarihi":
+                pattern = Pattern.compile("(\\d{2}\\.\\d{2}\\.\\d{4})");
+                matcher = pattern.matcher(text);
+                while (matcher.find()) {
+                    String date = matcher.group(1);
+                    if (date.startsWith("05.03")) { // Doğum tarihi formatı kontrolü
+                        updateTextView(field, date);
+                        break;
+                    }
+                }
+                break;
+        }
+    }
+
     private void updateTextView(String field, String value) {
         TextView tv = null;
         switch (field) {
+            case "TCKN": 
+                tv = tvTCKN;
+                break;
             case "Soyadı": 
                 tv = tvSoyadi;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Adı": 
                 tv = tvAdi;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Doğum Tarihi": 
                 tv = tvDogumTarihi;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Doğum Yeri": 
                 tv = tvDogumYeri;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Veriliş Tarihi": 
                 tv = tvVerilisTarihi;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Geçerlilik Tarihi": 
                 tv = tvGecerlilikTarihi;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Verildiği İlçe": 
                 tv = tvVerildigiIlce;
-                value = "Bulunan " + field + ": " + value;
-                break;
-            case "TCKN": 
-                tv = tvTCKN;
-                value = "Bulunan " + field + ": " + value;
                 break;
             case "Ehliyet No": 
                 tv = tvEhliyetNo;
-                value = "Bulunan " + field + ": " + value;
+                break;
+            case "Seri No": 
+                tv = tvSeriNo;
+                break;
+            case "Uyruk": 
+                tv = tvUyruk;
+                break;
+            case "Son Geçerlilik": 
+                tv = tvGecerlilikTarihi;
                 break;
         }
 
         if (tv != null) {
-            tv.setText(value);
+            tv.setText("Bulunan " + field + ": " + value);
         }
     }
 
     private void setDefaultErrorValues() {
+        tvBelgeTipi.setText("❌ Belge Tipi Belirlenemedi");
+        tvBelgeTipi.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
         tvSoyadi.setText("Soyadı: Okunamadı");
         tvAdi.setText("Adı: Okunamadı");
         tvDogumTarihi.setText("Doğum Tarihi: Okunamadı");
@@ -354,5 +483,7 @@ public class ResultActivity extends AppCompatActivity {
         tvVerildigiIlce.setText("Verildiği İlçe: Okunamadı");
         tvTCKN.setText("TCKN: Okunamadı");
         tvEhliyetNo.setText("Ehliyet No: Okunamadı");
+        tvSeriNo.setText("Seri No: Okunamadı");
+        tvUyruk.setText("Uyruk: Okunamadı");
     }
 } 
