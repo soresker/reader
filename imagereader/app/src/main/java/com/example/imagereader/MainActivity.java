@@ -4,8 +4,11 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import androidx.core.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,9 +20,15 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_CODE = 100;
     private static final int CAMERA_REQUEST_CODE = 101;
+    private static final int STORAGE_PERMISSION_CODE = 102;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,14 +36,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         FloatingActionButton cameraButton = findViewById(R.id.cameraButton);
-        cameraButton.setOnClickListener(v -> checkCameraPermission());
+        cameraButton.setOnClickListener(v -> checkPermissions());
     }
 
-    private void checkCameraPermission() {
+    private void checkPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
+            
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
+                    new String[]{
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                    },
                     CAMERA_PERMISSION_CODE);
         } else {
             openCamera();
@@ -44,22 +60,34 @@ public class MainActivity extends AppCompatActivity {
     private void openCamera() {
         try {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            // Kamera ayarları
-            intent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, 1024*1024*10); // 10MB
-
+            
             // Yüksek çözünürlük için
-            Bundle bundle = new Bundle();
-            bundle.putInt("android.intent.extras.CAMERA_FACING", 0);
-            bundle.putInt("android.intent.extras.LENS_FACING_FRONT", 0);
-            bundle.putInt("android.intent.extras.CAMERA_MODE", 0);
-            intent.putExtras(bundle);
-
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, createImageUri());
+            intent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, 1024*1024*20); // 20MB
+            intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1); // En yüksek kalite
+            
             startActivityForResult(intent, CAMERA_REQUEST_CODE);
         } catch (Exception e) {
             Log.e("CAMERA_ERROR", "Kamera açılırken hata: ", e);
             Toast.makeText(this, "Kamera açılamadı: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    private Uri createImageUri() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",        /* suffix */
+                storageDir     /* directory */
+        );
+
+        currentPhotoPath = image.getAbsolutePath();
+        return FileProvider.getUriForFile(this,
+                getApplicationContext().getPackageName() + ".provider",
+                image);
     }
 
     @Override
@@ -79,27 +107,32 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         try {
-            if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-                Bitmap photo = null;
-
-                // Önce tam boyutlu fotoğrafı almayı dene
-                if (data.hasExtra("data")) {
-                    photo = (Bitmap) data.getExtras().get("data");
+            if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
+                if (currentPhotoPath == null) {
+                    Log.e("CAMERA_ERROR", "Fotoğraf yolu bulunamadı");
+                    Toast.makeText(this, "Fotoğraf yolu bulunamadı", Toast.LENGTH_LONG).show();
+                    return;
                 }
 
-                if (photo != null) {
-                    // Fotoğrafı ResultActivity'ye gönder
-                    Intent intent = new Intent(this, ResultActivity.class);
-                    intent.putExtra("photo", photo);
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(this, "Fotoğraf alınamadı", Toast.LENGTH_LONG).show();
+                File photoFile = new File(currentPhotoPath);
+                if (!photoFile.exists()) {
+                    Log.e("CAMERA_ERROR", "Fotoğraf dosyası bulunamadı: " + currentPhotoPath);
+                    Toast.makeText(this, "Fotoğraf dosyası bulunamadı", Toast.LENGTH_LONG).show();
+                    return;
                 }
+
+                // Fotoğraf dosyasının yolunu ResultActivity'ye gönder
+                Intent intent = new Intent(this, ResultActivity.class);
+                intent.putExtra("photo_path", currentPhotoPath);
+                startActivity(intent);
             }
         } catch (Exception e) {
-            Log.e("CAMERA_RESULT_ERROR", "Fotoğraf alınırken hata: ", e);
+            Log.e("CAMERA_ERROR", "Fotoğraf işlenirken hata: " + e.getMessage(), e);
+            e.printStackTrace();
             Toast.makeText(this, "Fotoğraf işlenirken hata oluştu: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
     }
+
+    private String currentPhotoPath;
 }
